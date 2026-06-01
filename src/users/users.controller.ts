@@ -7,6 +7,7 @@ import { UserRole } from 'src/common';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RolesGuard } from 'src/auth/guards/role.guard';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { Public } from 'src/auth/decorators/public.decorators';
 
 
 
@@ -39,8 +40,9 @@ export class UsersController {
     return await this.usersService.getUserByEmail(email);
   }
 
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard)
+  // @AuthRole(UserRole.ADMIN)
+  // @UseGuards(JwtGuard)
+  @Public()
   @Post()
   async createUser(@Body() user: CreateUserDto) {
     return await this.usersService.createUser(user);
