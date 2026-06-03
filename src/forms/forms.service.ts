@@ -71,35 +71,32 @@ export class FormsService {
         return this.formSchema.create(entity);
     }
 
-    async updateForm(code: string, updateForm: UpdateFormDto, userId: string) {
-        const existForm = await this.formSchema.findOne({
-            code, deleted: false
-        })
+    async updateForm(code: string, dto: UpdateFormDto, userId: string) {
+        const existForm = await this.formSchema.findOne({ code, deleted: false });
 
-        if (!existForm) { throw new NotFoundException(`Formulario eliminado o inexistente`) }
+        if (!existForm) {
+            throw new NotFoundException(`Formulario eliminado o inexistente`);
+        }
 
         if (existForm.createdBy.userId.toString() !== userId) {
-            throw new ForbiddenException
+            throw new ForbiddenException();
         }
 
-        const hasChanges = this.hasFormChanges(existForm, updateForm);
+        const hasChanges = this.hasFormChanges(existForm, dto);
+        if (!hasChanges) return existForm;
 
-        if (!hasChanges) {
-            return existForm;
-        }
-
-        const newVersion = existForm.version + 1;
-
-        const newForm = {
-            ...existForm.toObject(),
-            ...updateForm,
-            _id: undefined, // importante para Mongo
-            version: newVersion,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        const updatePayload = {
+            ...dto,
+            version: dto.version ?? existForm.version + 1,
         };
 
-        return this.formSchema.create(newForm);
+        const updated = await this.formSchema.findOneAndUpdate(
+            { code, deleted: false },
+            { $set: updatePayload },
+            { returnDocument: 'after' }
+        ).exec();
+
+        return updated;
     }
 
     private hasFormChanges(current: any, dto: any): boolean {

@@ -174,8 +174,8 @@ export class FormField {
   conditionalRules: ConditionalRule[];
 
   @Prop({ type: String, default: null })
-  dataSource: string | null;  
-  
+  dataSource: string | null;
+
   @Prop({ default: 0 })
   order: number;
 }
@@ -198,13 +198,15 @@ export class Form {
   @Prop({ default: 1 })
   version: number;
 
+  @Prop({ type: Date, default: null })
+  documentDate: Date | null;
+
   @Prop({ type: String, enum: AccessType, default: AccessType.RESTRICTED, index: true })
   accessType: AccessType;
 
   @Prop({ type: FormSettings, default: () => ({}) })
   settings: FormSettings;
 
-  /** Solo relevante cuando accessType = RESTRICTED */
   @Prop({ type: FormPermissions, default: () => ({ users: [] }) })
   permissions: FormPermissions;
 
@@ -214,7 +216,7 @@ export class Form {
   @Prop({ type: [FormSection], default: [] })
   sections: FormSection[];
 
-  
+
   @Prop({ type: [FormField], default: [] })
   fields: FormField[];
 
