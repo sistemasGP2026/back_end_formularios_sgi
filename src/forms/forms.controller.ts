@@ -36,7 +36,13 @@ export class FormsController {
       req.user.username
     );
   }
-  
+
+  @UseGuards(JwtGuard)
+  @Get('public')
+  async getMyPublicForms(){
+    return await this.formsService.getAllPublicForms()
+  }
+
   @UseGuards(OptionalJwtGuard, FormAccessGuard)
   @Get(':code')
   async getFormByCode(@Param('code') code: string) {
@@ -63,7 +69,8 @@ export class FormsController {
     @Body() dto: UpdateFormDto,
   ) {
     const user = req.user;
-    return await this.formsService.updateForm(code, dto, user.id);
+    console.log('req.user:', req.user);
+    return await this.formsService.updateForm(code, dto, user.sub);
   }
 
   @AuthRole(UserRole.ADMIN)
@@ -80,6 +87,4 @@ export class FormsController {
   async removePermissionToUser(@Param('code') code: string, @Param('username') username: string) {
     return await this.formsService.deleteUserPermission(code, username);
   }
-
-  
 }

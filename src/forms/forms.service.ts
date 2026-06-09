@@ -10,6 +10,7 @@ import { UsersService } from 'src/users/users.service';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { EmailService } from 'src/email/email.service';
 import { AssignPermissionDto } from './dto/assign-permission.dto';
+import { access } from 'fs';
 
 @Injectable()
 export class FormsService {
@@ -178,6 +179,7 @@ export class FormsService {
             message: 'Usuario removido del formulario'
         };
     }
+
     async getMyFormsAssigned(username: string): Promise<Form[]> {
         return this.formSchema.find({
             deleted: false,
@@ -185,5 +187,9 @@ export class FormsService {
         })
             .lean()
             .exec();
+    }
+
+    async getAllPublicForms():Promise<Form[]>{
+        return await this.formSchema.find({accessType: AccessType.PUBLIC})
     }
 }
