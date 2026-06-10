@@ -272,4 +272,22 @@ export class ResponsesService {
       .exec();
   }
 
+
+  async deleteResponse(id: string): Promise<void> {
+    const response = await this.responseModel.findById(id);
+    if (!response) throw new NotFoundException(`Respuesta no encontrada`);
+
+    await this.responseModel.findByIdAndUpdate(
+      id,
+      { $set: { deleted: true } },
+      { returnDocument: 'after' }
+    ).exec();
+  }
+
+  async deleteResponsesByForm(formCode: string): Promise<void> {
+    await this.responseModel.updateMany(
+      { formCode, deleted: false },
+      { $set: { deleted: true } }
+    ).exec();
+  }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
 import { OptionalJwtGuard } from 'src/auth/guards/optional-jwt.guard';
 import { FormAccessGuard } from 'src/forms/guards/form-access.guard';
@@ -57,4 +57,21 @@ export class ResponsesController {
   async getMyResponses(@Req() req: any) {
     return this.responsesService.getMyResponses(req.user.id);
   }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete('form/:formCode')
+  async deleteResponsesByForm(@Param('formCode') formCode: string) {
+    await this.responsesService.deleteResponsesByForm(formCode);
+    return { message: `Respuestas del formulario ${formCode} eliminadas` };
+  }
+  
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete(':id')
+  async deleteResponse(@Param('id') id: string) {
+    await this.responsesService.deleteResponse(id);
+    return { message: 'Respuesta eliminada correctamente' };
+  }
+
 }

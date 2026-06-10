@@ -39,7 +39,7 @@ export class FormsController {
 
   @UseGuards(JwtGuard)
   @Get('public')
-  async getMyPublicForms(){
+  async getMyPublicForms() {
     return await this.formsService.getAllPublicForms()
   }
 
@@ -79,7 +79,22 @@ export class FormsController {
   async assignPermissionToUser(@Body() assignPermission: AssignPermissionDto) {
     return await this.formsService.assignUserPermissionToForm(assignPermission);
   }
-  
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete('/delete/:formCode')
+  async deleteForm(@Param('formCode') code: string) {
+    await this.formsService.deleteForm(code);
+    return { message: `Formulario ${code} eliminado correctamente` };
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Patch('/activate/:formCode')
+  async activateForm(@Param('formCode') code: string) {
+    await this.formsService.activateForm(code);
+    return { message: `Formulario ${code} activado correctamente` };
+  }
 
   @AuthRole(UserRole.ADMIN)
   @UseGuards(JwtGuard, RolesGuard, FormAccessGuard)

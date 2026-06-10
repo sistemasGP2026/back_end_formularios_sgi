@@ -25,7 +25,7 @@ export class FormsService {
     }
 
     async getFormByCode(code: string) {
-        return await this.formSchema.findOne({ code, deleted: false }).exec()
+        return await this.formSchema.findOne({ code }).exec()
     }
 
     async createForm(dto: CreateFormDto, creatorId: string): Promise<FormDocument> {
@@ -152,6 +152,7 @@ export class FormsService {
     async getFormsByCategory(category: string): Promise<Form[]> {
         return await this.formSchema.find({ category })
             .lean()
+            .sort({ code: 1 })
             .exec()
     }
 
@@ -189,7 +190,29 @@ export class FormsService {
             .exec();
     }
 
-    async getAllPublicForms():Promise<Form[]>{
-        return await this.formSchema.find({accessType: AccessType.PUBLIC})
+    async getAllPublicForms(): Promise<Form[]> {
+        return await this.formSchema.find({ accessType: AccessType.PUBLIC })
+    }
+
+    async deleteForm(code: string): Promise<void> {
+        const form = await this.formSchema.findOne({ code, deleted: false });
+        if (!form) throw new NotFoundException(`Formulario no encontrado`);
+
+        await this.formSchema.findOneAndUpdate(
+            { code },
+            { $set: { deleted: true } },
+            { returnDocument: 'after' }
+        ).exec();
+    }
+
+    async activateForm(code: string) {
+        const form = await this.formSchema.findOne({ code, deleted: true });
+        if (!form) throw new NotFoundException(`Formulario no encontrado`);
+
+        await this.formSchema.findOneAndUpdate(
+            { code },
+            { $set: { deleted: false } },
+            { returnDocument: 'after' }
+        ).exec();
     }
 }
