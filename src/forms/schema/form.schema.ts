@@ -7,7 +7,6 @@ import { ITableRow } from 'src/interfaces/table-row.interface';
 
 export type FormDocument = HydratedDocument<Form>;
 
-//  SUBDOCUMENTOS
 @Schema({ _id: false })
 export class FormSettings {
   @Prop({ default: false })
@@ -49,9 +48,11 @@ export class UserPermission {
 
 @Schema({ _id: false })
 export class FormPermissions {
-  /** Solo se evalúan cuando accessType = RESTRICTED */
   @Prop({ type: [UserPermission], default: [] })
   users: UserPermission[];
+
+  @Prop({ type: [UserPermission], default: [] })
+  approvers: UserPermission[]; 
 }
 
 @Schema({ _id: false })
@@ -110,6 +111,22 @@ export class ConditionalRule {
   @Prop({ type: String, enum: ConditionalAction, required: true })
   action: ConditionalAction;
 }
+
+@Schema({ _id: false })
+export class ThresholdRule {
+  @Prop({ required: true, type: Number })
+  min: number;
+
+  @Prop({ required: true, type: Number })
+  max: number;
+
+  @Prop({ required: true })
+  label: string;
+
+  @Prop({ type: String, default: null })
+  color: string | null;
+}
+
 
 @Schema({ _id: false })
 export class FormField {
@@ -178,6 +195,21 @@ export class FormField {
 
   @Prop({ default: 0 })
   order: number;
+
+  @Prop({ type: Number, default: null })
+  weight: number | null;
+
+  @Prop({ type: Number, default: null })
+  maxScore: number | null;
+
+  @Prop({ type: String, default: null })
+  formula: string | null;
+
+  @Prop({ type: String, default: null })
+  sourceField: string | null;
+
+  @Prop({ type: [Object], default: [] })
+  thresholds: ThresholdRule[];
 }
 
 //  SCHEMA PRINCIPAL
@@ -215,7 +247,6 @@ export class Form {
 
   @Prop({ type: [FormSection], default: [] })
   sections: FormSection[];
-
 
   @Prop({ type: [FormField], default: [] })
   fields: FormField[];

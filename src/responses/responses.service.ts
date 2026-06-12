@@ -1,15 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { FormResponse, ResponseDocument } from './schemas/response.schema';
+import { Model, Types } from 'mongoose';
+import { FormResponse, ResponseDocument, ResponseStatus } from './schemas/response.schema';
 import { CreateResponseDto } from './dto/create-response.dto';
-import { FormDocument, FormField } from 'src/forms/schema/form.schema';
+import { Form, FormDocument, FormField } from 'src/forms/schema/form.schema';
 import { fieldValidators } from './validators/field.validators';
 import { ruleValidators } from './validators/rule.validators';
 import { UsersService } from 'src/users/users.service';
 import { IUserRequest } from './dto/user.request';
 import { User } from 'src/users/schema/user.schema';
 import { FormsService } from 'src/forms/forms.service';
+import { UserRole } from 'src/common';
+import { ApproveResponseDto } from './dto/approve-response.dto';
 
 type AnswerMap = Map<string, unknown>;
 type ActiveFields = Set<string>;
@@ -20,7 +22,9 @@ export class ResponsesService {
     @InjectModel(FormResponse.name)
     private readonly responseModel: Model<ResponseDocument>,
     private readonly userService: UsersService,
-    private readonly formService: FormsService
+    private readonly formService: FormsService,
+    @InjectModel(Form.name)
+    private readonly formModel: Model<FormDocument>,
   ) { }
 
   async getResponsesByFormCode(codeForm: string) {
@@ -32,7 +36,6 @@ export class ResponsesService {
   }
 
   async createResponse(dto: CreateResponseDto, userRequest: IUserRequest, form: FormDocument): Promise<ResponseDocument> {
-
     // Verificar duplicados
     await this.checkDuplicates(form, dto, userRequest);
 
@@ -50,6 +53,11 @@ export class ResponsesService {
 
     const user: User = await this.userService.findUserById(userRequest.id);
 
+    // Determinar status según configuración del formulario
+    const status = form.settings?.requiresApproval
+      ? ResponseStatus.PENDING
+      : ResponseStatus.APPROVED;
+
     // Persistir
     return this.responseModel.create({
       formId: form._id,
@@ -61,12 +69,19 @@ export class ResponsesService {
       },
       submittedAt: new Date(),
       data,
+      status,
+      approval: {
+        approvedBy: null,
+        approverName: null,
+        approverUsername: null,
+        approvedAt: null,
+        rejectionReason: null,
+      },
       deleted: false,
     });
   }
 
   //duplicados
-
   private async checkDuplicates(
     form: FormDocument,
     dto: CreateResponseDto,
@@ -290,4 +305,64 @@ export class ResponsesService {
       { $set: { deleted: true } }
     ).exec();
   }
+
+  // Solo las del approver — para APPROVER
+  async getPendingByApprover(userId: string) {
+    const forms = await this.formModel.find({
+      deleted: false,
+      'settings.requiresApproval': true,
+      'permissions.approvers.userId': new Types.ObjectId(userId),
+    }).select('code').lean().exec();
+
+    const codes = forms.map((f: any) => f.code);
+    if (codes.length === 0) return [];
+
+    return this.responseModel
+      .find({ deleted: false, status: ResponseStatus.PENDING, formCode: { $in: codes } })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async getAllPending() {
+    return this.responseModel
+      .find({ deleted: false, status: ResponseStatus.PENDING })
+      .sort({ createdAt: -1 })
+      .exec();
+  }
+
+  async approveResponse(
+    responseId: string,
+    dto: ApproveResponseDto,
+    approverId: string,
+    approverName: string,
+    approverUsername: string,
+  ) {
+    const response = await this.responseModel.findById(responseId);
+    if (!response) throw new NotFoundException('Respuesta no encontrada');
+
+    if (response.status !== ResponseStatus.PENDING) {
+      throw new BadRequestException('Esta respuesta ya fue procesada');
+    }
+
+    if (dto.status === ResponseStatus.REJECTED && !dto.rejectionReason?.trim()) {
+      throw new BadRequestException('Debes ingresar una razón de rechazo');
+    }
+
+    return this.responseModel.findByIdAndUpdate(
+      responseId,
+      {
+        $set: {
+          status: dto.status,
+          'approval.approvedBy': new Types.ObjectId(approverId),
+          'approval.approverName': approverName,
+          'approval.approverUsername': approverUsername,
+          'approval.approvedAt': new Date(),
+          'approval.rejectionReason': dto.rejectionReason ?? null,
+        },
+      },
+      { returnDocument: 'after' }
+    ).exec();
+  }
+
+
 }

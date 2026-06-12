@@ -102,4 +102,21 @@ export class FormsController {
   async removePermissionToUser(@Param('code') code: string, @Param('username') username: string) {
     return await this.formsService.deleteUserPermission(code, username);
   }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Patch('approvers')
+  async assignApprover(@Body() dto: AssignPermissionDto) {
+    return this.formsService.assignApproverToForm(dto);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete(':code/approvers/:username')
+  async removeApprover(
+    @Param('code') code: string,
+    @Param('username') username: string,
+  ) {
+    return this.formsService.removeApproverFromForm(code, username);
+  }
 }

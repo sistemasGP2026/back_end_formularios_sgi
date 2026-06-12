@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer';
 import {
-  IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber,
+  IsArray, IsBoolean, IsDate, IsEnum, IsInt, IsNotEmpty, IsNumber,
   IsOptional, IsString, Matches, MaxLength, Min,
   ValidateIf, ValidateNested,
 } from 'class-validator';
@@ -14,21 +14,15 @@ export class FormSettingsDto {
   @IsBoolean() @IsOptional() requiresApproval?: boolean;
   @IsBoolean() @IsOptional() showCompliance?: boolean;
   @IsBoolean() @IsOptional() preventDuplicates?: boolean;
-
-  @IsEnum(DuplicateBy)
-  @IsOptional()
+  @IsEnum(DuplicateBy) @IsOptional()
   @ValidateIf((o) => o.preventDuplicates === true)
   duplicateBy?: DuplicateBy;
-
   @IsBoolean() @IsOptional() requiresSede?: boolean;
   @IsBoolean() @IsOptional() requiresReviewSignature?: boolean;
 }
 
 export class UserPermissionDto {
-  @IsString()
-  @IsNotEmpty()
-  username: string;
-
+  @IsString() @IsNotEmpty() username: string;
   @IsBoolean() @IsOptional() canView?: boolean;
   @IsBoolean() @IsOptional() canSubmit?: boolean;
   @IsBoolean() @IsOptional() canEdit?: boolean;
@@ -55,29 +49,27 @@ export class FieldOptionDto {
   @IsString() @IsNotEmpty() @MaxLength(300) label: string;
   @IsString() @IsNotEmpty() @MaxLength(200) value: string;
   @IsBoolean() @IsOptional() isDefault?: boolean;
-  @IsNumber() @Min(0) order: number;
+  @IsNumber() @Min(0) @IsOptional() order?: number;
 }
 
 export class TableColumnDto {
   @IsString() @IsNotEmpty() key: string;
   @IsString() @IsNotEmpty() @MaxLength(200) label: string;
   @IsEnum(FieldType) inputType: FieldType;
-  @IsBoolean() required: boolean;
-  @IsNumber() @Min(0) order: number;
-
+  @IsBoolean() @IsOptional() required?: boolean;
+  @IsNumber() @Min(0) @IsOptional() order?: number;
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => FieldOptionDto)
   @IsOptional()
   options?: FieldOptionDto[];
-
   @IsString() @IsOptional() width?: string;
 }
 
 export class TableRowDto {
   @IsString() @IsNotEmpty() id: string;
   @IsString() @IsNotEmpty() @MaxLength(300) label: string;
-  @IsNumber() @Min(0) order: number;
+  @IsNumber() @Min(0) @IsOptional() order?: number;
   @IsString() @IsOptional() unitLabel?: string;
   @IsNumber() @Min(0) @IsOptional() minQuantity?: number;
 }
@@ -93,6 +85,13 @@ export class ConditionalRuleDto {
   @IsEnum(ConditionalOperator) operator: ConditionalOperator;
   @IsString() @IsOptional() expectedValue?: string;
   @IsEnum(ConditionalAction) action: ConditionalAction;
+}
+
+export class ThresholdRuleDto {
+  @IsNumber() min: number;
+  @IsNumber() max: number;
+  @IsString() @IsNotEmpty() label: string;
+  @IsString() @IsOptional() color?: string | null;
 }
 
 export class FormFieldDto {
@@ -147,10 +146,19 @@ export class FormFieldDto {
   conditionalRules?: ConditionalRuleDto[];
 
   @IsNumber() @Min(0) @IsOptional() order?: number;
+  @IsString() @IsOptional() dataSource?: string | null;
 
-  @IsString()
+  // ─── campos calculados ───────────────────────────────────────────────────
+  @IsNumber() @Min(0) @IsOptional() weight?: number | null;
+  @IsNumber() @Min(0) @IsOptional() maxScore?: number | null;
+  @IsString() @IsOptional() formula?: string | null;
+  @IsString() @IsOptional() sourceField?: string | null;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ThresholdRuleDto)
   @IsOptional()
-  dataSource?: string;
+  thresholds?: ThresholdRuleDto[];
 }
 
 export class CreateFormDto {
@@ -160,7 +168,14 @@ export class CreateFormDto {
 
   @IsString() @IsNotEmpty() @MaxLength(200) name: string;
   @IsString() @IsOptional() description?: string;
-  @IsEnum(FormCategory) category: FormCategory;
+  @IsEnum(FormCategory, {
+    message: 'La categoría seleccionada no es válida'
+  })
+  category: FormCategory;
+
+  // ─── versión y fecha del documento ───────────────────────────────────────
+  @IsInt() @Min(1) @IsOptional() version?: number;
+  @IsOptional() documentDate?: Date | null;
 
   @IsEnum(AccessType) @IsOptional() accessType?: AccessType;
 
@@ -169,10 +184,6 @@ export class CreateFormDto {
   @IsOptional()
   settings?: FormSettingsDto;
 
-  /**
-   * Solo se procesa cuando accessType = RESTRICTED.
-   * El service ignora este campo si el formulario es PUBLIC.
-   */
   @ValidateNested()
   @Type(() => FormPermissionsDto)
   @IsOptional()

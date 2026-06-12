@@ -39,7 +39,7 @@ export class UsersService {
 
     async createUser(data: CreateUserDto) {
 
-        const allowedRoles = [UserRole.ADMIN, UserRole.USER];
+        const allowedRoles = [UserRole.ADMIN, UserRole.USER, UserRole.APPROVER];
         const passwordHashed = await bcrypt.hash(data.password, 10)
 
         const existEmail = await this.userSchema.findOne({ email: data.email })

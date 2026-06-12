@@ -2,6 +2,7 @@ import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
   ValidateNested,
@@ -18,5 +19,6 @@ export class CreateResponseDto {
   @Type(() => FilledByDto)
   filledBy: FilledByDto;
 
-  data: Record<string, unknown>
+  @IsObject()  
+  data: Record<string, unknown>;
 }

@@ -1,8 +1,30 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
+export enum ResponseStatus {
+  PENDING   = 'PENDING',
+  APPROVED  = 'APPROVED',
+  REJECTED  = 'REJECTED',
+}
+
 export type ResponseDocument = HydratedDocument<FormResponse>;
-//Subdocumentos
+@Schema({ _id: false })
+export class ApprovalInfo {
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  approvedBy: Types.ObjectId | null;
+
+  @Prop({ default: null })
+  approverName: string | null;
+
+  @Prop({ default: null })
+  approverUsername: string | null;
+
+  @Prop({ type: Date, default: null })
+  approvedAt: Date | null;
+
+  @Prop({ type: String, default: null })
+  rejectionReason: string | null;
+}
 @Schema({ _id: false })
 export class FilledBy {
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })
@@ -29,6 +51,12 @@ export class FormResponse {
 
   @Prop({ required: true })
   submittedAt: Date;
+
+  @Prop({ type: String, enum: ResponseStatus, default: ResponseStatus.PENDING })
+  status: ResponseStatus;
+
+  @Prop({ type: ApprovalInfo, default: () => ({}) })
+  approval: ApprovalInfo;
 
   @Prop({ type: MongooseSchema.Types.Mixed, default: {} })
   data: Record<string, unknown>;

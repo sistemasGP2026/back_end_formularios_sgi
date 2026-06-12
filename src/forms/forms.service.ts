@@ -36,7 +36,6 @@ export class FormsService {
         }
         const exists = await this.formSchema.findOne({
             code: dto.code.toUpperCase(),
-            deleted: null,
         }).exec();
 
         if (exists) {
@@ -215,4 +214,38 @@ export class FormsService {
             { returnDocument: 'after' }
         ).exec();
     }
+
+    async assignApproverToForm(dto: AssignPermissionDto) {
+  const form = await this.getFormByCode(dto.formCode);
+  if (!form) throw new BadRequestException('Formulario no encontrado');
+
+  const users = await this.userService.findActiveByUsernames(dto.usernames);
+  if (users.length === 0) throw new BadRequestException('Ningún usuario encontrado');
+
+  const approverPermissions = users.map(u => ({
+    userId:   new mongoose.Types.ObjectId(u._id),
+    name:     u.fullName,
+    username: u.username,
+    email:    u.email,
+  }));
+
+  // Evita duplicados
+  for (const ap of approverPermissions) {
+    const exists = form.permissions.approvers?.some(
+      a => a.username === ap.username
+    );
+    if (!exists) form.permissions.approvers.push(ap);
+  }
+
+  await form.save();
+  return approverPermissions;
+}
+
+async removeApproverFromForm(formCode: string, username: string) {
+  await this.formSchema.updateOne(
+    { code: formCode },
+    { $pull: { 'permissions.approvers': { username } } }
+  );
+  return { message: 'Aprobador removido' };
+}
 }
