@@ -21,86 +21,21 @@ export class FormsController {
     return await this.formsService.getAllForms();
   }
 
-  @Get('/category/:category')
+  @Get('category/:category')
   async getFormByCategory(@Param('category') category: string) {
     return await this.formsService.getFormsByCategory(category);
   }
 
   @UseGuards(JwtGuard)
   @Get('myform/assigned')
-  async getMyAssignedForms(
-    @Req() req: any
-  ) {
-
-    return this.formsService.getMyFormsAssigned(
-      req.user.username
-    );
+  async getMyAssignedForms(@Req() req: any) {
+    return this.formsService.getMyFormsAssigned(req.user.username);
   }
 
   @UseGuards(JwtGuard)
   @Get('public')
-  async getMyPublicForms() {
-    return await this.formsService.getAllPublicForms()
-  }
-
-  @UseGuards(OptionalJwtGuard, FormAccessGuard)
-  @Get(':code')
-  async getFormByCode(@Param('code') code: string) {
-    return await this.formsService.getFormByCode(code)
-  }
-
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Post()
-  async generateForm(
-    @Body() dto: CreateFormDto,
-    @Req() req: any) {
-    const user = req.user.sub
-    return await this.formsService.createForm(dto, user)
-  }
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Put(':code')
-  async updateForm(
-    @Req() req: any,
-    @Param('code') code: string,
-    @Body() dto: UpdateFormDto,
-  ) {
-    const user = req.user;
-    console.log('req.user:', req.user);
-    return await this.formsService.updateForm(code, dto, user.sub);
-  }
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Patch('')
-  async assignPermissionToUser(@Body() assignPermission: AssignPermissionDto) {
-    return await this.formsService.assignUserPermissionToForm(assignPermission);
-  }
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Delete('/delete/:formCode')
-  async deleteForm(@Param('formCode') code: string) {
-    await this.formsService.deleteForm(code);
-    return { message: `Formulario ${code} eliminado correctamente` };
-  }
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Patch('/activate/:formCode')
-  async activateForm(@Param('formCode') code: string) {
-    await this.formsService.activateForm(code);
-    return { message: `Formulario ${code} activado correctamente` };
-  }
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard, FormAccessGuard)
-  @Delete('/:code/:username')
-  async removePermissionToUser(@Param('code') code: string, @Param('username') username: string) {
-    return await this.formsService.deleteUserPermission(code, username);
+  async getPublicForms() {
+    return await this.formsService.getAllPublicForms();
   }
 
   @AuthRole(UserRole.ADMIN)
@@ -108,6 +43,59 @@ export class FormsController {
   @Patch('approvers')
   async assignApprover(@Body() dto: AssignPermissionDto) {
     return this.formsService.assignApproverToForm(dto);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Patch('activate/:formCode')
+  async activateForm(@Param('formCode') code: string) {
+    await this.formsService.activateForm(code);
+    return { message: `Formulario ${code} activado correctamente` };
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete('delete/:formCode')
+  async deleteForm(@Param('formCode') code: string) {
+    await this.formsService.deleteForm(code);
+    return { message: `Formulario ${code} eliminado correctamente` };
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Post()
+  async generateForm(@Body() dto: CreateFormDto, @Req() req: any) {
+    return await this.formsService.createForm(dto, req.user.sub);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Patch()
+  async assignPermissionToUser(@Body() assignPermission: AssignPermissionDto) {
+    return await this.formsService.assignUserPermissionToForm(assignPermission);
+  }
+
+  @UseGuards(OptionalJwtGuard, FormAccessGuard)
+  @Get(':code')
+  async getFormByCode(@Param('code') code: string) {
+    return await this.formsService.getFormByCode(code);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Put(':code')
+  async updateForm(@Req() req: any, @Param('code') code: string, @Body() dto: UpdateFormDto) {
+    return await this.formsService.updateForm(code, dto, req.user.sub);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard, FormAccessGuard)
+  @Delete(':code/:username')
+  async removePermissionToUser(
+    @Param('code') code: string,
+    @Param('username') username: string
+  ) {
+    return await this.formsService.deleteUserPermission(code, username);
   }
 
   @AuthRole(UserRole.ADMIN)
