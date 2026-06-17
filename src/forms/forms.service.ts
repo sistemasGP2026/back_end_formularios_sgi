@@ -21,12 +21,12 @@ export class FormsService {
     ) { }
 
     async getAllForms() {
-        return await this.formSchema.find({ deleted: false }).exec()
+    	return await this.formSchema.find({ deleted: false }).lean().exec()
     }
 
     async getFormByCode(code: string) {
-        return await this.formSchema.findOne({ code }).exec()
-    }
+    	return await this.formSchema.findOne({ code }).lean().exec()
+     }
 
     async createForm(dto: CreateFormDto, creatorId: string): Promise<FormDocument> {
         const creator = await this.userService.findUserById(creatorId);
@@ -190,8 +190,8 @@ export class FormsService {
     }
 
     async getAllPublicForms(): Promise<Form[]> {
-        return await this.formSchema.find({ accessType: AccessType.PUBLIC })
-    }
+	return await this.formSchema.find({ accessType: AccessType.PUBLIC }).lean().exec()
+     }
 
     async deleteForm(code: string): Promise<void> {
         const form = await this.formSchema.findOne({ code, deleted: false });

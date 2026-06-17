@@ -28,11 +28,11 @@ export class ResponsesService {
   ) { }
 
   async getResponsesByFormCode(codeForm: string) {
-    return await this.responseModel.find({ formCode: codeForm }).exec();
+    return await this.responseModel.find({ formCode: codeForm }).lean().exec();
   }
 
   async getResponseDetailsById(response_id: string) {
-    return await this.responseModel.findById(response_id);
+    return await this.responseModel.findById(response_id).lean().exec();
   }
 
   async createResponse(dto: CreateResponseDto, userRequest: IUserRequest, form: FormDocument): Promise<ResponseDocument> {
@@ -320,6 +320,7 @@ export class ResponsesService {
     return this.responseModel
       .find({ deleted: false, status: ResponseStatus.PENDING, formCode: { $in: codes } })
       .sort({ createdAt: -1 })
+      .lean()
       .exec();
   }
 
@@ -327,6 +328,7 @@ export class ResponsesService {
     return this.responseModel
       .find({ deleted: false, status: ResponseStatus.PENDING })
       .sort({ createdAt: -1 })
+      .lean()
       .exec();
   }
 
@@ -361,7 +363,7 @@ export class ResponsesService {
         },
       },
       { returnDocument: 'after' }
-    ).exec();
+    ).lean().exec();
   }
 
 

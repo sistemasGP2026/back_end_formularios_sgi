@@ -4,22 +4,22 @@ import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+
+  app.enableCors({
+    origin: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true
     })
-  )
-  app.enableCors({
-    origin: 'http://192.168.1.103:5000', 
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,
-  });
-  await app.listen(process.env.PORT ?? 3000);
-  app.useGlobalInterceptors(
-    new ClassSerializerInterceptor(app.get(Reflector))
-  )
+  );
+
+  await app.listen(process.env.PORT ?? 2000);
 }
+
 bootstrap();
