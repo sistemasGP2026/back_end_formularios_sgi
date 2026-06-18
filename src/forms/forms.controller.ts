@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { FormsService } from './forms.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
@@ -84,7 +84,12 @@ export class FormsController {
   @AuthRole(UserRole.ADMIN)
   @UseGuards(JwtGuard, RolesGuard)
   @Put(':code')
-  async updateForm(@Req() req: any, @Param('code') code: string, @Body() dto: UpdateFormDto) {
+  @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: false, transform: true }))
+  async updateForm(
+    @Req() req: any,
+    @Param('code') code: string,
+    @Body() dto: UpdateFormDto,
+  ) {
     return await this.formsService.updateForm(code, dto, req.user.sub);
   }
 

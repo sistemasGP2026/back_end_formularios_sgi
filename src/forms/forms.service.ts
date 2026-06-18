@@ -21,12 +21,12 @@ export class FormsService {
     ) { }
 
     async getAllForms() {
-    	return await this.formSchema.find({ deleted: false }).lean().exec()
+        return await this.formSchema.find({ deleted: false }).lean().exec()
     }
 
     async getFormByCode(code: string) {
-    	return await this.formSchema.findOne({ code }).lean().exec()
-     }
+        return await this.formSchema.findOne({ code }).lean().exec()
+    }
 
     async createForm(dto: CreateFormDto, creatorId: string): Promise<FormDocument> {
         const creator = await this.userService.findUserById(creatorId);
@@ -73,30 +73,49 @@ export class FormsService {
 
     async updateForm(code: string, dto: UpdateFormDto, userId: string) {
         const existForm = await this.formSchema.findOne({ code, deleted: false });
-
-        if (!existForm) {
-            throw new NotFoundException(`Formulario eliminado o inexistente`);
-        }
-
-        if (existForm.createdBy.userId.toString() !== userId) {
-            throw new ForbiddenException();
-        }
+        if (!existForm) throw new NotFoundException(`Formulario eliminado o inexistente`);
 
         const hasChanges = this.hasFormChanges(existForm, dto);
         if (!hasChanges) return existForm;
 
-        const updatePayload = {
+        // Normaliza documentDate antes de que Mongoose lo castee
+        const updatePayload: any = {
             ...dto,
             version: dto.version ?? existForm.version + 1,
         };
 
-        const updated = await this.formSchema.findOneAndUpdate(
+        if (updatePayload.documentDate) {
+            updatePayload.documentDate = this.parseDate(updatePayload.documentDate);
+        }
+
+        return this.formSchema.findOneAndUpdate(
             { code, deleted: false },
             { $set: updatePayload },
             { returnDocument: 'after' }
         ).exec();
+    }
 
-        return updated;
+    private parseDate(value: unknown): Date | null {
+        if (!value) return null;
+        if (value instanceof Date) return value;
+
+        const str = String(value).trim();
+
+        // dd/MM/yyyy
+        const ddmmyyyy = str.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (ddmmyyyy) {
+            return new Date(`${ddmmyyyy[3]}-${ddmmyyyy[2]}-${ddmmyyyy[1]}`);
+        }
+
+        // dd-MM-yyyy
+        const ddmmyyyyDash = str.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+        if (ddmmyyyyDash) {
+            return new Date(`${ddmmyyyyDash[3]}-${ddmmyyyyDash[2]}-${ddmmyyyyDash[1]}`);
+        }
+
+        // YYYY-MM-DD o ISO — Mongoose lo maneja solo
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
     }
 
     private hasFormChanges(current: any, dto: any): boolean {
@@ -190,8 +209,8 @@ export class FormsService {
     }
 
     async getAllPublicForms(): Promise<Form[]> {
-	return await this.formSchema.find({ accessType: AccessType.PUBLIC }).lean().exec()
-     }
+        return await this.formSchema.find({ accessType: AccessType.PUBLIC }).lean().exec()
+    }
 
     async deleteForm(code: string): Promise<void> {
         const form = await this.formSchema.findOne({ code, deleted: false });
@@ -216,36 +235,36 @@ export class FormsService {
     }
 
     async assignApproverToForm(dto: AssignPermissionDto) {
-  const form = await this.getFormByCode(dto.formCode);
-  if (!form) throw new BadRequestException('Formulario no encontrado');
+        const form = await this.getFormByCode(dto.formCode);
+        if (!form) throw new BadRequestException('Formulario no encontrado');
 
-  const users = await this.userService.findActiveByUsernames(dto.usernames);
-  if (users.length === 0) throw new BadRequestException('Ningún usuario encontrado');
+        const users = await this.userService.findActiveByUsernames(dto.usernames);
+        if (users.length === 0) throw new BadRequestException('Ningún usuario encontrado');
 
-  const approverPermissions = users.map(u => ({
-    userId:   new mongoose.Types.ObjectId(u._id),
-    name:     u.fullName,
-    username: u.username,
-    email:    u.email,
-  }));
+        const approverPermissions = users.map(u => ({
+            userId: new mongoose.Types.ObjectId(u._id),
+            name: u.fullName,
+            username: u.username,
+            email: u.email,
+        }));
 
-  // Evita duplicados
-  for (const ap of approverPermissions) {
-    const exists = form.permissions.approvers?.some(
-      a => a.username === ap.username
-    );
-    if (!exists) form.permissions.approvers.push(ap);
-  }
+        // Evita duplicados
+        for (const ap of approverPermissions) {
+            const exists = form.permissions.approvers?.some(
+                a => a.username === ap.username
+            );
+            if (!exists) form.permissions.approvers.push(ap);
+        }
 
-  await form.save();
-  return approverPermissions;
-}
+        await form.save();
+        return approverPermissions;
+    }
 
-async removeApproverFromForm(formCode: string, username: string) {
-  await this.formSchema.updateOne(
-    { code: formCode },
-    { $pull: { 'permissions.approvers': { username } } }
-  );
-  return { message: 'Aprobador removido' };
-}
+    async removeApproverFromForm(formCode: string, username: string) {
+        await this.formSchema.updateOne(
+            { code: formCode },
+            { $pull: { 'permissions.approvers': { username } } }
+        );
+        return { message: 'Aprobador removido' };
+    }
 }
