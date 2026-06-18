@@ -10,7 +10,6 @@ import { FormDocument } from 'src/forms/schema/form.schema';
 import { AuthRole } from 'src/auth/decorators/auth-role.decorator';
 import { JwtGuard } from 'src/auth/guards/jwt.guard';
 import { ApproveResponseDto } from './dto/approve-response.dto';
-import { AssignPermissionDto } from 'src/forms/dto/assign-permission.dto';
 
 @Controller('responses')
 export class ResponsesController {
@@ -32,6 +31,14 @@ export class ResponsesController {
     return this.responsesService.getMyResponses(req.user.id);
   }
 
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Delete('bulk')
+  async deleteManyResponses(@Body() body: { ids: string[] }) {
+    await this.responsesService.deleteResponsesByIds(body.ids);
+    return { message: 'Respuestas eliminadas correctamente' };
+  }
+  
   @UseGuards(JwtGuard, RolesGuard)
   @AuthRole(UserRole.ADMIN)
   @Get('detail/:id')
@@ -54,12 +61,6 @@ export class ResponsesController {
     return { message: `Respuestas del formulario ${formCode} eliminadas` };
   }
 
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
-  @Get('/:codeForm')
-  async getResponsesByFormCode(@Param('codeForm') codeForm: string) {
-    return await this.responsesService.getResponsesByFormCode(codeForm);
-  }
 
   @Post(':code')
   @UseGuards(OptionalJwtGuard, FormAccessGuard, RolesGuard)
@@ -90,12 +91,16 @@ export class ResponsesController {
     @Req() req: any,
   ) {
     return this.responsesService.approveResponse(
-      id,
-      dto,
-      req.user.sub,
-      req.user.fullname,
-      req.user.username,
+      id, dto, req.user.sub, req.user.fullname, req.user.username,
     );
   }
 
+  // ── Ruta dinámica más genérica, siempre al final ────────
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard, RolesGuard)
+  @Get(':codeForm')
+  async getResponsesByFormCode(@Param('codeForm') codeForm: string) {
+    return await this.responsesService.getResponsesByFormCode(codeForm);
+  }
 }

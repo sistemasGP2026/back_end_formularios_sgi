@@ -28,7 +28,7 @@ export class ResponsesService {
   ) { }
 
   async getResponsesByFormCode(codeForm: string) {
-    return await this.responseModel.find({ formCode: codeForm }).lean().exec();
+    return await this.responseModel.find({ formCode: codeForm, deleted: false }).lean().exec();
   }
 
   async getResponseDetailsById(response_id: string) {
@@ -367,4 +367,11 @@ export class ResponsesService {
   }
 
 
+  async deleteResponsesByIds(ids: string[]): Promise<void> {
+    const objectIds = ids.map(id => new Types.ObjectId(id));
+    await this.responseModel.updateMany(
+      { _id: { $in: objectIds }, deleted: false },
+      { $set: { deleted: true } }
+    ).exec();
+  }
 }

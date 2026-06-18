@@ -96,6 +96,10 @@ export class UsersService {
     }
 
     async editUser(id: string, userData: UpdateUserDto) {
+        const cleanData = Object.fromEntries(
+            Object.entries(userData).filter(([_, v]) => v !== undefined && v !== null)
+        )
+
         const userNew = await this.userSchema.findByIdAndUpdate(id,
             { $set: userData },
             { returnDocument: 'after' }
@@ -132,6 +136,19 @@ export class UsersService {
         usuario.save();
         return {
             msg: 'usuario eliminado'
+        }
+    }
+
+    async activateUserById(id: string) {
+        const usuario = await this.userSchema.findById(id);
+
+        if (!usuario) return;
+
+        usuario.active = true;
+        usuario.deleted = false;
+        usuario.save();
+        return {
+            msg: 'usuario activado'
         }
     }
 

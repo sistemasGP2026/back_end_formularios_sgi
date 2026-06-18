@@ -40,9 +40,8 @@ export class UsersController {
     return await this.usersService.getUserByEmail(email);
   }
 
-  // @AuthRole(UserRole.ADMIN)
-  // @UseGuards(JwtGuard)
-  @Public()
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard)
   @Post()
   async createUser(@Body() user: CreateUserDto) {
     return await this.usersService.createUser(user);
@@ -60,6 +59,13 @@ export class UsersController {
   @Delete(':id')
   async deleteUser(@Param('id') id: string) {
     return await this.usersService.deleteUserById(id);
+  }
+
+  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard)
+  @Patch('activate/:id')
+  async activateUser(@Param('id') id: string) {
+    return await this.usersService.activateUserById(id);
   }
 
   @Patch(':id/reset-password')

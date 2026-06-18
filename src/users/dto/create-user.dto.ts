@@ -25,6 +25,6 @@ export class CreateUserDto {
   @MaxLength(64)
   password: string;
 
-  @IsEnum(UserRole, { each: true, message: 'El rol no existe' })
+  @IsEnum(UserRole, { message: 'El rol no existe' })
   roles: UserRole;
 }
