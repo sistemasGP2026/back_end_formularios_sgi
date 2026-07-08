@@ -28,7 +28,7 @@ export class ResponsesController {
   @UseGuards(JwtGuard)
   @Get('my/history')
   async getMyResponses(@Req() req: any) {
-    return this.responsesService.getMyResponses(req.user.id);
+    return this.responsesService.getMyResponses(req.user.sub);
   }
 
   @AuthRole(UserRole.ADMIN)
@@ -39,8 +39,7 @@ export class ResponsesController {
     return { message: 'Respuestas eliminadas correctamente' };
   }
   
-  @UseGuards(JwtGuard, RolesGuard)
-  @AuthRole(UserRole.ADMIN)
+  @UseGuards(JwtGuard)
   @Get('detail/:id')
   async getResponseDetail(@Param('id') id: string) {
     return await this.responsesService.getResponseDetailsById(id);
@@ -95,10 +94,8 @@ export class ResponsesController {
     );
   }
 
-  // ── Ruta dinámica más genérica, siempre al final ────────
-
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
+  //Ruta dinámica más genérica
+  @UseGuards(JwtGuard)
   @Get(':codeForm')
   async getResponsesByFormCode(@Param('codeForm') codeForm: string) {
     return await this.responsesService.getResponsesByFormCode(codeForm);

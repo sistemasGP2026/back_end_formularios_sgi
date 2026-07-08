@@ -14,8 +14,8 @@ import { AssignPermissionDto } from './dto/assign-permission.dto';
 export class FormsController {
   constructor(private readonly formsService: FormsService) { }
 
-  @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard, RolesGuard)
+  
+  @UseGuards(JwtGuard)
   @Get()
   async getAllForms() {
     return await this.formsService.getAllForms();

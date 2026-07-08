@@ -280,11 +280,13 @@ export class ResponsesService {
   }
 
   async getMyResponses(userId: string) {
-    return await this.responseModel
-      .find({ 'filledBy.userId': userId, deleted: false })
+    const resp = await this.responseModel
+      .find({ 'filledBy.userId': new Types.ObjectId(userId), deleted: false})
       .sort({ submittedAt: -1 })
       .lean()
       .exec();
+    console.log(resp);
+    return resp;
   }
 
 
