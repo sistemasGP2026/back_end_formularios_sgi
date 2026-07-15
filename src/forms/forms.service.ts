@@ -248,15 +248,37 @@ export class FormsService {
             email: u.email,
         }));
 
-        // Evita duplicados
-        for (const ap of approverPermissions) {
-            const exists = form.permissions.approvers?.some(
-                a => a.username === ap.username
-            );
-            if (!exists) form.permissions.approvers.push(ap);
+        if (!form.permissions) {
+            form.permissions = { users: [], approvers: [] };
         }
 
-        await form.save();
+        if (!form.permissions.approvers) {
+            form.permissions.approvers = [];
+        }
+
+
+        for (const ap of approverPermissions) {
+            const exists = form.permissions.approvers.some(
+                a => a.username === ap.username
+            );
+            if (!exists) {
+                form.permissions.approvers.push(ap);
+            }
+        }
+        const updatedForm = await this.formSchema.findOneAndUpdate(
+            { code: dto.formCode },
+            {
+                $addToSet: {
+                    'permissions.approvers': { $each: approverPermissions }
+                }
+            },
+            { new: true } // Nos devuelve el documento modificado
+        );
+
+        if (!updatedForm) {
+            throw new BadRequestException('Formulario no encontrado');
+        }
+
         return approverPermissions;
     }
 

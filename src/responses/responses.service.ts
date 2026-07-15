@@ -28,7 +28,9 @@ export class ResponsesService {
   ) { }
 
   async getResponsesByFormCode(codeForm: string) {
-    return await this.responseModel.find({ formCode: codeForm, deleted: false }).lean().exec();
+    return await this.responseModel.find({ formCode: codeForm, deleted: false })
+    .sort({'submitedAt':-1})
+    .lean().exec();
   }
 
   async getResponseDetailsById(response_id: string) {
@@ -113,9 +115,8 @@ export class ResponsesService {
   }
 
   //mapa de respuestas
-
   private buildAnswerMap(data: Record<string, unknown>): AnswerMap {
-    return new Map(Object.entries(data)); // keys = field.name
+    return new Map(Object.entries(data)); 
   }
 
   //lógica condicional

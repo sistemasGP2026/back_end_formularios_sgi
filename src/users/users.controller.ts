@@ -41,7 +41,7 @@ export class UsersController {
   }
 
   @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Post()
   async createUser(@Body() user: CreateUserDto) {
     return await this.usersService.createUser(user);
