@@ -65,7 +65,7 @@ export class ResponsesService {
       formId: form._id,
       formCode: form.code,
       filledBy: {
-        userId: user._id ?? null,
+        userId: user?._id ?? null,
         fullName: user?.fullName ?? dto.filledBy?.fullName ?? '',
         email: user?.email ?? dto.filledBy?.email ?? '',
       },
@@ -120,7 +120,6 @@ export class ResponsesService {
   }
 
   //lógica condicional
-
   private resolveActiveFields(
     fields: FormField[],
     answerMap: AnswerMap
@@ -197,7 +196,6 @@ export class ResponsesService {
   }
 
   //validación de respuestas
-
   private validateAnswers(
     fields: FormField[],
     answerMap: AnswerMap,
@@ -240,7 +238,6 @@ export class ResponsesService {
   }
 
   //construcción del record final
-
   private buildDataRecord(
     answerMap: Map<string, unknown>,
     activeFields: ActiveFields,
