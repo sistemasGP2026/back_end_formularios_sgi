@@ -61,8 +61,8 @@ export class UsersController {
     return await this.usersService.deleteUserById(id);
   }
 
+  @UseGuards(JwtGuard, RolesGuard)
   @AuthRole(UserRole.ADMIN)
-  @UseGuards(JwtGuard)
   @Patch('activate/:id')
   async activateUser(@Param('id') id: string) {
     return await this.usersService.activateUserById(id);
