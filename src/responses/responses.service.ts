@@ -27,10 +27,24 @@ export class ResponsesService {
     private readonly formModel: Model<FormDocument>,
   ) { }
 
-  async getResponsesByFormCode(codeForm: string) {
-    return await this.responseModel.find({ formCode: codeForm, deleted: false })
-    .sort({'submitedAt':-1})
-    .lean().exec();
+  async getResponsesByFormCode(codeForm: string, startDate?: string, endDate?: string) {
+    const filter: any = { formCode: codeForm, deleted: false };
+
+    if (startDate || endDate) {
+      filter.submittedAt = {};
+      if (startDate) {
+        filter.submittedAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        filter.submittedAt.$lte = end;
+      }
+    }
+
+    return await this.responseModel.find(filter)
+      .sort({ submittedAt: -1 })
+      .lean().exec();
   }
 
   async getResponseDetailsById(response_id: string) {
@@ -116,7 +130,7 @@ export class ResponsesService {
 
   //mapa de respuestas
   private buildAnswerMap(data: Record<string, unknown>): AnswerMap {
-    return new Map(Object.entries(data)); 
+    return new Map(Object.entries(data));
   }
 
   //lógica condicional
@@ -279,7 +293,7 @@ export class ResponsesService {
 
   async getMyResponses(userId: string) {
     const resp = await this.responseModel
-      .find({ 'filledBy.userId': new Types.ObjectId(userId), deleted: false})
+      .find({ 'filledBy.userId': new Types.ObjectId(userId), deleted: false })
       .sort({ submittedAt: -1 })
       .lean()
       .exec();

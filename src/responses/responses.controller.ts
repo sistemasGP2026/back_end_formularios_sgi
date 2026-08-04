@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ResponsesService } from './responses.service';
 import { OptionalJwtGuard } from 'src/auth/guards/optional-jwt.guard';
 import { FormAccessGuard } from 'src/forms/guards/form-access.guard';
@@ -38,7 +38,7 @@ export class ResponsesController {
     await this.responsesService.deleteResponsesByIds(body.ids);
     return { message: 'Respuestas eliminadas correctamente' };
   }
-  
+
   @UseGuards(JwtGuard)
   @Get('detail/:id')
   async getResponseDetail(@Param('id') id: string) {
@@ -97,7 +97,11 @@ export class ResponsesController {
   //Ruta dinámica más genérica
   @UseGuards(JwtGuard)
   @Get(':codeForm')
-  async getResponsesByFormCode(@Param('codeForm') codeForm: string) {
-    return await this.responsesService.getResponsesByFormCode(codeForm);
+  async getResponsesByFormCode(
+    @Param('codeForm') codeForm: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.responsesService.getResponsesByFormCode(codeForm, startDate, endDate);
   }
 }
