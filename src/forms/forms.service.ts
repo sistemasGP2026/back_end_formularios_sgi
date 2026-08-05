@@ -128,7 +128,7 @@ export class FormsService {
 
     async assignUserPermissionToForm(assignPermission: AssignPermissionDto) {
 
-        const form = await this.getFormByCode(assignPermission.formCode);
+        const form = await this.formSchema.findOne({ code: assignPermission.formCode }); 
 
         if (!form) {
             throw new BadRequestException(`Formulario no encontrado`)
