@@ -7,7 +7,6 @@ import * as bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { UserResponse } from './dto/user.response.dto';
 import { UserRole } from 'src/common';
-import { UpdateFormDto } from 'src/forms/dto/update-form.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 
@@ -62,7 +61,7 @@ export class UsersService {
             username: data.username,
             roles: data.roles,
             password: passwordHashed,
-            deleted: false,
+            mustChangePassword: true,
             createdAt: new Date()
         }
 
@@ -132,7 +131,6 @@ export class UsersService {
         if (!usuario) return;
 
         usuario.active = false;
-        usuario.deleted = true;
         usuario.save();
         return {
             msg: 'usuario eliminado'
@@ -145,7 +143,6 @@ export class UsersService {
         if (!usuario) return;
 
         usuario.active = true;
-        usuario.deleted = false;
         usuario.save();
         return {
             msg: 'usuario activado'
@@ -165,6 +162,7 @@ export class UsersService {
             .exec();
 
         if (!user) throw new NotFoundException(`Usuario con id: ${id} no encontrado`);
+
 
         return { message: 'Contraseña actualizada correctamente' };
     }

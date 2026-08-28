@@ -272,7 +272,7 @@ export class FormsService {
                     'permissions.approvers': { $each: approverPermissions }
                 }
             },
-            { new: true } // Nos devuelve el documento modificado
+            { new: true }
         );
 
         if (!updatedForm) {

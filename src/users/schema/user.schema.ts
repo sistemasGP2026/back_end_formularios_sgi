@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Exclude, Transform } from 'class-transformer';
+import { Transform } from 'class-transformer';
 import { HydratedDocument } from 'mongoose';
 import { UserRole } from "src/common";
 
@@ -19,20 +19,17 @@ export class User {
   @Prop({ required: true, unique: true, lowercase: true, trim: true, index: true })
   email: string;
 
-  @Prop({
-    required: true,
-    select: false
-  })
+  @Prop({ required: true, select: false })
   password: string;
+
+  @Prop({ default: true})
+  mustChangePassword: boolean
 
   @Prop({ type: String, enum: UserRole, default: UserRole.USER })
   roles: UserRole;
 
   @Prop({ default: true, index: true })
   active?: boolean;
-
-  @Prop({ type: Boolean, default: true, index: true })
-  deleted: boolean;
 
   createdAt: Date;
 

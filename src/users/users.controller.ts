@@ -15,9 +15,7 @@ import { Public } from 'src/auth/decorators/public.decorators';
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
 
-  constructor(
-    private readonly usersService: UsersService
-  ) { }
+  constructor(private readonly usersService: UsersService) { }
 
   @AuthRole(UserRole.ADMIN)
   @UseGuards(JwtGuard)
@@ -71,10 +69,7 @@ export class UsersController {
   @Patch(':id/reset-password')
   @UseGuards(JwtGuard, RolesGuard)
   @AuthRole(UserRole.ADMIN)
-  async resetPassword(
-    @Param('id') id: string,
-    @Body() dto: ResetPasswordDto
-  ) {
+  async resetPassword(@Param('id') id: string,@Body() dto: ResetPasswordDto) {
     return this.usersService.resetPassword(id, dto);
   }
 }

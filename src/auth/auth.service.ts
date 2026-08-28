@@ -32,7 +32,8 @@ export class AuthService {
             username: user.username
         }
 
-        const userTransformed = plainToInstance(User, user.toObject());
+        const { password, ...userWithoutPassword } = user.toObject();
+        const userTransformed = plainToInstance(User, userWithoutPassword);
 
         const response: SignInResponse = {
             user: userTransformed,
@@ -42,22 +43,40 @@ export class AuthService {
     }
 
     async checkToken(userFromToken: any) {
-
         if (!userFromToken?.sub) {
             throw new UnauthorizedException('Token inválido');
         }
-
         const user = await this.userService.findUserById(userFromToken.sub);
 
         if (!user) {
             throw new UnauthorizedException('Usuario no existe');
         }
-
         return this.buildAuthResponse(user);
     }
 
-    private buildAuthResponse(user: UserDocument) {
+    async changeFirstPassword(newPassword: string, userId: string) {
+        if(!newPassword){
+            throw new BadRequestException("La nueva clave es requerida")
+        }
+        const user = await this.userService.findUserById(userId);
 
+        if (!user) {
+            throw new BadRequestException(`El usuario con: ${user.id} no existe o esta desactivado`)
+        }
+
+        if(!user.mustChangePassword){
+            throw new BadRequestException(`El usuario ya cambio la clave`)
+        }
+        user.password = await bcrypt.hash(newPassword, 10);
+        user.mustChangePassword = false;
+        await user.save();
+        return {
+            'msg': 'Clave actualizada'
+        }
+    }
+
+
+    private buildAuthResponse(user: UserDocument) {
         return {
             user,
             token: this.jwtService.generateToken({
